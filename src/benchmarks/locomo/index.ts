@@ -83,6 +83,7 @@ export class LoCoMoBenchmark implements Benchmark {
   name = "locomo"
   // Published LoCoMo results (Mem0, Zep and others) score categories 1-4 only
   headlineExcludedTypes = ["adversarial"]
+  searchLimit = 30
   buildAnswerPrompt = buildLoCoMoAnswerPrompt
   buildJudgePrompt = buildLoCoMoJudgePrompt
   private data: LoCoMoItem[] = []

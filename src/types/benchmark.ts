@@ -27,6 +27,8 @@ export interface Benchmark {
   getContainerKey?(questionId: string): string
   /** Question types left out of the comparable headline score (still reported per type) */
   headlineExcludedTypes?: string[]
+  /** Results requested per search (default 10) */
+  searchLimit?: number
   /** Standard answer prompt for this benchmark; takes priority over provider prompts so runs stay comparable */
   buildAnswerPrompt?(question: UnifiedQuestion, context: string): string
   /** Standard judge prompt for this benchmark; takes priority over provider and default judge prompts */

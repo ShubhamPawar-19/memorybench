@@ -15,6 +15,7 @@ interface Benchmark {
     // Optional
     getContainerKey?(questionId: string): string   // questions sharing a haystack share a container
     headlineExcludedTypes?: string[]                 // left out of the comparable headline score
+    searchLimit?: number                             // results per search (default 10)
     buildAnswerPrompt?(question, context): string    // standard answer prompt, overrides provider prompts
     buildJudgePrompt?({ question, hypothesis }): string
 }
@@ -58,6 +59,7 @@ Category ids follow the dataset (snap-research/locomo): 1 multi-hop, 2 temporal,
 Comparable protocol (Mem0 paper harness, reused by Zep, Memobase, MemOS, LangMem):
 - Answer and judge prompts are Mem0's, verbatim (`locomo/prompts.ts`), for every provider; providers only format their search results.
 - Run with `-m gpt-4o-mini -j gpt-4o-mini` (temperature 0), as those papers did.
+- 30 results per search for every provider.
 - The headline score leaves out adversarial (1,540 questions); adversarial is still scored and reported per type.
 - Each conversation is ingested once into one container shared by its questions. Photo captions are part of the message text, as in LoCoMo's own evaluation.
 
