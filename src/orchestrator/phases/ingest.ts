@@ -77,7 +77,7 @@ export async function runIngestPhase(
     `Ingesting ${leads.length} containers for ${pendingQuestions.length} questions (concurrency: ${concurrency})...`
   )
 
-  await ConcurrentExecutor.executeBatched({
+  await ConcurrentExecutor.executePooled({
     items: leads,
     concurrency,
     rateLimitMs: RATE_LIMIT_MS,
@@ -161,7 +161,8 @@ export async function runIngestPhase(
         })
         logger.error(`Failed to ingest ${question.questionId}: ${error}`)
         throw new Error(
-          `Ingest failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`
+          `Ingest failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`,
+          { cause: e }
         )
       }
     },

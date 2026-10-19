@@ -94,7 +94,8 @@ export async function runSearchPhase(
         })
         logger.error(`Failed to search ${question.questionId}: ${error}`)
         throw new Error(
-          `Search failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`
+          `Search failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`,
+          { cause: e }
         )
       }
     }
