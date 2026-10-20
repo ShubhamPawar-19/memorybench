@@ -190,7 +190,8 @@ export async function runAnswerPhase(
         })
         logger.error(`Failed to answer ${question.questionId}: ${error}`)
         throw new Error(
-          `Answer failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`
+          `Answer failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`,
+          { cause: e }
         )
       }
     }

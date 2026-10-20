@@ -213,7 +213,8 @@ export async function runIndexingPhase(
         })
         logger.error(`\nFailed to index ${question.questionId}: ${error}`)
         throw new Error(
-          `Indexing failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`
+          `Indexing failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`,
+          { cause: e }
         )
       }
     }

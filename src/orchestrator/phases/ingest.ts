@@ -77,7 +77,7 @@ export async function runIngestPhase(
     `Ingesting ${leads.length} containers for ${pendingQuestions.length} questions (concurrency: ${concurrency})...`
   )
 
-  await ConcurrentExecutor.executeBatched({
+  await ConcurrentExecutor.executePooled({
     items: leads,
     concurrency,
     rateLimitMs: RATE_LIMIT_MS,
@@ -101,9 +101,13 @@ export async function runIngestPhase(
       })
 
       try {
-        const completedSessions =
-          checkpoint.questions[question.questionId].phases.ingest.completedSessions
-        const combinedResult: IngestResult = { documentIds: [], taskIds: [] }
+        const ingest = checkpoint.questions[question.questionId].phases.ingest
+        const completedSessions = ingest.completedSessions
+        // Saved after every session so a retry or resume keeps IDs from sessions it skips
+        const ingestResult: IngestResult = {
+          documentIds: [...(ingest.ingestResult?.documentIds || [])],
+          ...(ingest.ingestResult?.taskIds && { taskIds: [...ingest.ingestResult.taskIds] }),
+        }
 
         for (const session of sessions) {
           if (completedSessions.includes(session.sessionId)) {
@@ -112,39 +116,22 @@ export async function runIngestPhase(
 
           const result = await provider.ingest([session], { containerTag })
 
-          combinedResult.documentIds.push(...result.documentIds)
-          if (result.taskIds) {
-            combinedResult.taskIds!.push(...result.taskIds)
+          ingestResult.documentIds.push(...result.documentIds)
+          if (result.taskIds?.length) {
+            ingestResult.taskIds = [...(ingestResult.taskIds || []), ...result.taskIds]
           }
 
           completedSessions.push(session.sessionId)
           checkpointManager.updatePhase(checkpoint, question.questionId, "ingest", {
             completedSessions,
+            ingestResult,
           })
-        }
-
-        if (combinedResult.taskIds && combinedResult.taskIds.length === 0) {
-          delete combinedResult.taskIds
-        }
-
-        const existingResult = checkpoint.questions[question.questionId].phases.ingest.ingestResult
-        if (existingResult) {
-          combinedResult.documentIds = [
-            ...existingResult.documentIds,
-            ...combinedResult.documentIds,
-          ]
-          if (existingResult.taskIds || combinedResult.taskIds) {
-            combinedResult.taskIds = [
-              ...(existingResult.taskIds || []),
-              ...(combinedResult.taskIds || []),
-            ]
-          }
         }
 
         const durationMs = Date.now() - startTime
         checkpointManager.updatePhase(checkpoint, question.questionId, "ingest", {
           status: "completed",
-          ingestResult: combinedResult,
+          ingestResult,
           completedAt: new Date().toISOString(),
           durationMs,
         })
@@ -161,7 +148,8 @@ export async function runIngestPhase(
         })
         logger.error(`Failed to ingest ${question.questionId}: ${error}`)
         throw new Error(
-          `Ingest failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`
+          `Ingest failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`,
+          { cause: e }
         )
       }
     },

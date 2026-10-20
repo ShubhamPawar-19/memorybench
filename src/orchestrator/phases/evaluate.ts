@@ -102,7 +102,8 @@ export async function runEvaluatePhase(
         })
         logger.error(`Failed to evaluate ${question.questionId}: ${error}`)
         throw new Error(
-          `Evaluate failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`
+          `Evaluate failed at ${question.questionId}: ${error}. Fix the issue and resume with the same run ID.`,
+          { cause: e }
         )
       }
     }
